@@ -46,6 +46,7 @@ describe('user.services', () => {
         fetchUser({ address: '0x00123' });
         expect(a).toThrowError();
     });
+    /// TEST
 
     // it('should return user created createUser with payload', async () => {
     //     const payload = {
