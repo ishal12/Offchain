@@ -1,5 +1,7 @@
 import { Router } from 'express';
-import { ILivestockType, IFeedType, IUser, ITransferType } from '../types';
+import { countFeed, countLivestock, countTransfer, fetchFeed, fetchFeeds, fetchLivestock, fetchLivestocks, fetchTransfers } from '../services/livestock.services';
+import { fetchUser } from '../services/user.services';
+import { IFeedType, IUser, ILivestock, ILivestockDocument } from '../types';
 
 let Livestock = require("../models/livestock.model");
 let Feed = require("../models/feed.model")
@@ -11,35 +13,51 @@ router.route('/:address').get((req, res) => {
   const offset = Number(req.query.offset);
   const perPage = Number(req.query.perPage);
 
-  Livestock.find({ address: req.params.address }).skip(offset).limit(perPage)
-    .then((livestocks: ILivestockType) => {
-      Livestock.countDocuments({ address: req.params.address })
-        .then((count: number) => res.json({ livestocks, count }));
+  Promise.all([
+    fetchLivestocks({ address: req.params.address }).skip(offset).limit(perPage),
+    countLivestock({ address: req.params.address }),
+  ]).then(val => {
+    res.json({
+      livestocks: val[0],
+      count: val[1],
     })
-    .catch((err: Error) => res.status(400).json('Error: ' + err));
+  }).catch((err: Error) => res.status(400).json('Error: ' + err));
+
+  // fetchLivestock({ address: req.params.address }).skip(offset).limit(perPage)
+  //   .then((_livestocks: ILivestock[]) => livestocks = _livestocks)
+  //   .catch((err: Error) => res.status(400).json('Error: ' + err));
+
+  // countLivestock({ address: req.params.address })
+  //   .then((_count: number) => count = _count)
+  //   .catch((err: Error) => res.status(400).json('Error: ' + err));
+  // res.json({ livestocks, count });
 });
 
 router.route('/testing').get((req, res) => {
   Livestock.countDocuments({})
-    .then((livestocks: ILivestockType) => res.json(livestocks))
+    .then((livestocks: ILivestock) => res.json(livestocks))
     .catch((err: Error) => res.status(400).json('Error: ' + err));
 });
 
 router.route('/select/:address').get((req, res) => {
-  Livestock.find({ address: req.params.address, alive: { $in: [true] } })
-    .then((livestocks: ILivestockType) => res.json(livestocks))
+  fetchLivestock({ address: req.params.address, alive: { $in: [true] } })
+    .then((livestocks: ILivestock) => res.json(livestocks))
     .catch((err: Error) => res.status(400).json('Error: ' + err))
+
+  // Livestock.find({ address: req.params.address, alive: { $in: [true] } })
+  //   .then((livestocks: ILivestock) => res.json(livestocks))
+  //   .catch((err: Error) => res.status(400).json('Error: ' + err))
 });
 
 router.route('/ls/:id').get((req, res) => {
-  Livestock.findOne({ id: req.params.id })
-    .then((livestocks: ILivestockType) => res.json(livestocks))
+  fetchLivestock({ id: req.params.id })
+    .then((livestocks: ILivestock) => res.json(livestocks))
     .catch((err: Error) => res.status(400).json('Error: ' + err))
 });
 
 router.route('/weightRecord/:id').patch((req, res) => {
   Livestock.findOne({ id: req.params.id })
-    .then((livestocks: ILivestockType) => {
+    .then((livestocks: ILivestockDocument) => {
       livestocks.weight = req.body.weight;
       livestocks.length = req.body.length;
       livestocks.heartGrith = req.body.heartGrith;
@@ -66,7 +84,7 @@ router.route('/feedRecord/add/:id').post((req, res) => {
 });
 
 router.route('/feedRecord/view/:id').get((req, res) => {
-  Feed.findOne({ id: req.params.id })
+  fetchFeed({ id: req.params.id })
     .populate('_livestock')
     .then((feed: IFeedType) => res.json(feed))
     .catch((err: Error) => res.status(400).json('Error: ' + err));
@@ -76,18 +94,20 @@ router.route('/feedRecord/:id').get((req, res) => {
   const offset = Number(req.query.offset);
   const perPage = Number(req.query.perPage);
 
-  Feed.find({ id: req.params.id }).sort({ '_id': -1 }).skip(offset).limit(perPage)
-    .populate('_livestock')
-    .then((feed: IFeedType) => {
-      Feed.countDocuments({ id: req.params.id })
-        .then((count: number) => res.json({ feed, count }));
+  Promise.all([
+    fetchFeeds({ id: req.params.id }).sort({ '_id': -1 }).skip(offset).limit(perPage),
+    countFeed({ id: req.params.id }),
+  ]).then(val => {
+    res.json({
+      feed: val[0],
+      count: val[1]
     })
-    .catch((err: Error) => res.status(400).json('Error: ' + err));
+  }).catch((err: Error) => res.status(400).json('Error: ' + err));
 });
 
 // router.route('/transfer/:id').patch((req, res) => {
 //   Livestock.findOne({ id: req.params.id })
-//     .then((livestocks: ILivestockType) => {
+//     .then((livestocks: ILivestock) => {
 //       User.findOne({ address: livestocks.address })
 //         .then((user: IUser) => {
 //           user.totalLivestock && user.totalLivestock--;
@@ -112,9 +132,9 @@ router.route('/feedRecord/:id').get((req, res) => {
 // });
 
 router.route('/transfer/add/:id').post((req, res) => {
-  User.findOne({ address: req.body.addressFrom })
+  fetchUser({ address: req.body.addressFrom })
     .then((userFrom: IUser) => {
-      User.findOne({ address: req.body.addressTo })
+      fetchUser({ address: req.body.addressTo })
         .then((userTo: IUser) => {
           var _from = '';
           var _to = '';
@@ -156,13 +176,15 @@ router.route('/transfer/:id').get((req, res) => {
   const offset = Number(req.query.offset);
   const perPage = Number(req.query.perPage);
 
-  Transfer.find({ id: req.params.id }).sort({ '_id': -1 }).skip(offset).limit(perPage)
-    .populate('_livestock')
-    .then((transfer: ITransferType) => {
-      Transfer.countDocuments({ id: req.params.id })
-        .then((count: number) => res.json({ transfer, count }));
+  Promise.all([
+    fetchTransfers({ id: req.params.id }).sort({ '_id': -1 }).skip(offset).limit(perPage),
+    countTransfer({ id: req.params.id })
+  ]).then(val => {
+    res.json({
+      transfer: val[0],
+      count: val[1]
     })
-    .catch((err: Error) => res.status(400).json('Error: ' + err));
+  }).catch((err: Error) => res.status(400).json('Error: ' + err));
 });
 
 // router.route('/add').post((req, res) => {
@@ -189,12 +211,15 @@ router.route('/').get((req, res) => {
   const offset = Number(req.query.offset);
   const perPage = Number(req.query.perPage);
 
-  Livestock.find().skip(offset).limit(perPage)
-    .then((livestocks: ILivestockType) => {
-      Livestock.countDocuments({})
-        .then((count: number) => res.json({ livestocks, count }));
+  Promise.all([
+    fetchLivestocks().skip(offset).limit(perPage),
+    countLivestock()
+  ]).then(val => {
+    res.json({
+      livestocks: val[0],
+      count: val[1]
     })
-    .catch((err: Error) => res.status(400).json('Error: ' + err));
+  }).catch((err: Error) => res.status(400).json('Error: ' + err));
 })
 
 export const routerLivestock = router;

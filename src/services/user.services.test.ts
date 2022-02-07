@@ -1,8 +1,7 @@
-// const mockingoose = require('mockingoose');
 import { fetchUsers, countDoc, fetchUser } from './user.services';
 let User = require('../models/user.model');
 
-describe('user.services', () => {
+describe('fetchUsers', () => {
     afterEach(() => {
         jest.resetModules();
         jest.restoreAllMocks();
@@ -25,58 +24,6 @@ describe('user.services', () => {
         fetchUsers();
         expect(a).toThrowError();
     });
-
-    it('should return correct users and count', async () => {
-        const a = jest.spyOn(User, 'find').mockImplementationOnce(() => '');
-        const b = jest.spyOn(User, 'countDocuments').mockImplementationOnce(() => '');
-        fetchUsers();
-        countDoc();
-        expect(a).toHaveBeenCalledTimes(2);
-        expect(b).toHaveBeenCalled();
-    });
-
-    it('should return correct user fetchUser with options', async () => {
-        const a = jest.spyOn(User, 'findOne').mockImplementationOnce(() => '');
-        fetchUser({ address: '0x00123' });
-        expect(a).toHaveBeenCalled();
-    });
-
-    it('should throw error when fetchUser failed', async () => {
-        const a = jest.spyOn(User, 'findOne').mockImplementationOnce(() => { return new Error('x') });
-        fetchUser({ address: '0x00123' });
-        expect(a).toThrowError();
-    });
-    /// TEST
-
-    // it('should return user created createUser with payload', async () => {
-    //     const payload = {
-    //         address: '0x0',
-    //         name: 'test',
-    //         role: 0,
-    //         status: 1,
-    //         // totalLivestock: 0,
-    //         // txHash: '0x0123'
-    //     };
-    //     mockingoose(User).toReturn('berhasil', 'save');
-    //     createUser(payload).then((result: any) => {
-    //         expect(result).toBe('berhasil');
-    //     });
-    //     expect(a).toHaveBeenCalled();
-    // });
-
-    // it('should throw error when createUser failed', async () => {
-    //     const payload = {
-    //         address: '0x0',
-    //         name: 'test',
-    //         role: 0,
-    //         status: 1,
-    //         totalLivestock: 0,
-    //         txHash: '0x0123'
-    //     };
-    //     mockingoose(User).toReturn(payload, 'save')
-
-    //     expect(a).toThrowError();
-    // })
 
     /** TESTING */
     // router.route("/").get(async (req, res) => {
@@ -114,4 +61,89 @@ describe('user.services', () => {
     //         });
     //     });
     //   });
+});
+
+describe('fetchUser', () => {
+    afterEach(() => {
+        jest.resetModules();
+        jest.restoreAllMocks();
+    });
+
+    it('should return correct user fetchUser with options', async () => {
+        const a = jest.spyOn(User, 'findOne').mockImplementationOnce(() => '');
+        fetchUser({ address: '0x00123' });
+        expect(a).toHaveBeenCalled();
+    });
+
+    it('should throw error when fetchUser failed', async () => {
+        const a = jest.spyOn(User, 'findOne').mockImplementationOnce(() => { return new Error('x') });
+        fetchUser({ address: '0x00123' });
+        expect(a).toThrowError();
+    });
+});
+
+// describe('createUser', () => {
+//     afterEach(() => {
+//         jest.resetModules();
+//         jest.restoreAllMocks();
+
+//         // it('should create user when running createUser ', () => {
+//         //     // const payload: Record<string, any> = {
+//         //     //     address: "0x1234",
+//         //     //     name: 'test',
+//         //     //     role: 0,
+//         //     //     status: 1,
+//         //     //     totalLivestock: 0,
+//         //     //     txHash: "0x241S31"
+//         //     // };
+//         //     // mockingoose(User).toReturn('berhasil', 'save');
+//         //     // const res = createUser(payload);
+//         //     // expect(res).toBe('berhasil');
+//         //     const a = jest.spyOn(User.prototype, 'save').mockImplementation(() => '');
+//         //     const payload: any = {
+//         //         address: "0x1234",
+//         //         name: 'test',
+//         //         role: 0,
+//         //         status: 1,
+//         //         totalLivestock: 0,
+//         //         txHash: "0x241S31"
+//         //     };
+//         //     createUser(payload);
+//         //     expect(a).toHaveBeenCalled();
+//         // });
+//     });
+// });
+
+describe('countDoc', () => {
+    afterEach(() => {
+        jest.resetModules();
+        jest.restoreAllMocks();
+    });
+
+    it('should return correct users and count with option', async () => {
+        const a = jest.spyOn(User, 'find').mockImplementationOnce(() => '');
+        const b = jest.spyOn(User, 'countDocuments').mockImplementationOnce(() => '');
+        fetchUsers();
+        countDoc();
+        expect(a).toHaveBeenCalled();
+        expect(b).toHaveBeenCalled();
+    });
+
+    it('should return correct users and count without option', async () => {
+        const a = jest.spyOn(User, 'find').mockImplementationOnce(() => '');
+        const b = jest.spyOn(User, 'countDocuments').mockImplementationOnce(() => '');
+        fetchUsers();
+        countDoc({ status: { $in: ['0', '1'] } });
+        expect(a).toHaveBeenCalled();
+        expect(b).toHaveBeenCalled();
+    });
+
+    it('should throw error when countDoc failed', async () => {
+        const a = jest.spyOn(User, 'find').mockImplementationOnce(() => '');
+        const b = jest.spyOn(User, 'countDocuments').mockImplementationOnce(() => { return new Error('x') });
+        fetchUsers();
+        countDoc({ status: { $in: ['0', '1'] } });
+        expect(a).toHaveBeenCalled();
+        expect(b).toHaveBeenCalled();
+    });
 });

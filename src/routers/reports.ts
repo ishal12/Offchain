@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { ISlaughterType, ITransferType } from '../types';
+import { ISlaughterDocument, ITransferType } from '../types';
 import moment from 'moment';
+import { countLivestock, countSlaughter, countTransfer, fetchSlaughters, fetchTransfers } from '../services/report.services';
 var Web3 = require('web3');
-const SlaughterManager = require('../../../bc-trace/client/src/contracts/SlaughterManager.json');
+const SlaughterManager = require('../../SlaughterManager.json');
 
 const router = Router();
 let Livestock = require('../models/livestock.model');
@@ -13,26 +14,46 @@ router.route('/slaughter/total').get((req, res) => {
   const offset = Number(req.query.offset);
   const perPage = Number(req.query.perPage);
 
-  Slaughters.find({ status: { $in: ['diterima', 'postmortem', 'packing'] } }).skip(offset).limit(perPage)
-    .populate('_livestock')
-    .then((slaughters: ISlaughterType) => {
-      Slaughters.countDocuments({ status: { $in: ['diterima', 'postmortem', 'packing'] } })
-        .then((count: number) => res.json({ slaughters, count }));
+  Promise.all([
+    fetchSlaughters({ status: { $in: ['diterima', 'postmortem', 'packing'] } }).skip(offset).limit(perPage).populate('_livestock'),
+    countSlaughter({ status: { $in: ['diterima', 'postmortem', 'packing'] } })
+  ]).then(val => {
+    res.json({
+      slaughters: val[0],
+      count: val[1]
     })
-    .catch((err: Error) => res.status(400).json('Error: ' + err));
+  }).catch((err: Error) => res.status(400).json('Error: ' + err));
+
+  // Slaughters.find({ status: { $in: ['diterima', 'postmortem', 'packing'] } }).skip(offset).limit(perPage)
+  //   .populate('_livestock')
+  //   .then((slaughters: ISlaughterDocument) => {
+  //     Slaughters.countDocuments({ status: { $in: ['diterima', 'postmortem', 'packing'] } })
+  //       .then((count: number) => res.json({ slaughters, count }));
+  //   })
+  //   .catch((err: Error) => res.status(400).json('Error: ' + err));
 });
 
 router.route('/transfer/total').get((req, res) => {
   const offset = Number(req.query.offset);
   const perPage = Number(req.query.perPage);
 
-  Transfer.find({}).sort({ '_id': -1 }).skip(offset).limit(perPage)
-    .populate('_livestock')
-    .then((transfers: ITransferType) => {
-      Transfer.countDocuments({})
-        .then((count: number) => res.json({ transfers, count }));
+  Promise.all([
+    fetchTransfers().sort({ '_id': -1 }).skip(offset).limit(perPage).populate('_livestock'),
+    countTransfer()
+  ]).then(val => {
+    res.json({
+      transfers: val[0],
+      count: val[1]
     })
-    .catch((err: Error) => res.status(400).json('Error: ' + err));
+  }).catch((err: Error) => res.status(400).json('Error: ' + err));
+
+  // Transfer.find({}).sort({ '_id': -1 }).skip(offset).limit(perPage)
+  //   .populate('_livestock')
+  //   .then((transfers: ITransferType) => {
+  //     Transfer.countDocuments({})
+  //       .then((count: number) => res.json({ transfers, count }));
+  //   })
+  //   .catch((err: Error) => res.status(400).json('Error: ' + err));
 });
 
 router.route('/dashboard').get((req, res) => {
@@ -40,16 +61,16 @@ router.route('/dashboard').get((req, res) => {
   var startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   Promise.all([
-    Livestock.countDocuments({ alive: { $in: [true] } }),
-    Livestock.countDocuments({ alive: { $in: [true] }, createdAt: { $gte: startOfToday } }),
-    Livestock.countDocuments({ alive: { $in: [false] } }),
-    Livestock.countDocuments({ alive: { $in: [false] }, createdAt: { $gte: startOfToday } }),
-    Livestock.countDocuments({}),
-    Livestock.countDocuments({ createdAt: { $gte: startOfToday } }),
-    Slaughters.countDocuments({ status: { $in: ['diterima', 'postmortem', 'packing'] } }),
-    Slaughters.countDocuments({ status: { $in: ['diterima', 'postmortem', 'packing'] }, createdAt: { $gte: startOfToday } }),
-    Transfer.countDocuments({}),
-    Transfer.countDocuments({ createdAt: { $gte: startOfToday } }),
+    countLivestock({ alive: { $in: [true] } }),
+    countLivestock({ alive: { $in: [true] }, createdAt: { $gte: startOfToday } }),
+    countLivestock({ alive: { $in: [false] } }),
+    countLivestock({ alive: { $in: [false] }, createdAt: { $gte: startOfToday } }),
+    countLivestock({}),
+    countLivestock({ createdAt: { $gte: startOfToday } }),
+    countSlaughter({ status: { $in: ['diterima', 'postmortem', 'packing'] } }),
+    countSlaughter({ status: { $in: ['diterima', 'postmortem', 'packing'] }, createdAt: { $gte: startOfToday } }),
+    countTransfer({}),
+    countTransfer({ createdAt: { $gte: startOfToday } }),
   ]).then(val => {
     res.json({
       alive: val[0],

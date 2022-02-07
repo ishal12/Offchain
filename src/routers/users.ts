@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { IUser } from "../types";
-import { fetchUsers } from '../services/user.services';
+import { countDoc, fetchUser, fetchUsers } from '../services/user.services';
 
 let User = require('../models/user.model');
 const router = Router();
@@ -8,45 +8,51 @@ const router = Router();
 router.route('/process/').get((req, res) => {
   const offset = Number(req.query.offset);
   const perPage = Number(req.query.perPage);
-  var users: IUser[] = [];
-  var counts: number = 0;
 
-  fetchUsers({ status: { $in: ['2'] } }).skip(offset).limit(perPage)
-    .then((user: IUser[]) => { users = user; })
-    .catch((err: Error) => res.status(400).json('Error: ' + err));
+  Promise.all([
+    fetchUsers({ status: { $in: ['2'] } }).skip(offset).limit(perPage),
+    countDoc({ status: { $in: ['2'] } })
+  ]).then(val => {
+    res.json({
+      users: val[0],
+      count: val[1]
+    })
+  }).catch((err: Error) => res.status(400).json('Error: ' + err));
 
-  User.countDocuments({ status: { $in: ['2'] } })
-    .then((count: number) => counts = count);
-  res.json({ users, counts });
 });
 
 router.route('/activated/').get((req, res) => {
   const offset = Number(req.query.offset);
   const perPage = Number(req.query.perPage);
 
-  User.find({ status: { $in: ['0', '1'] } }).skip(offset).limit(perPage)
-    .then((users: IUser) => {
-      User.countDocuments({ status: { $in: ['0', '1'] } })
-        .then((count: number) => res.json({ users, count }));
-    })
-    .catch((err: Error) => res.status(400).json('Error: ' + err));
+  Promise.all([
+    fetchUsers({ status: { $in: ['0', '1'] } }).skip(offset).limit(perPage),
+    countDoc({ status: { $in: ['0', '1'] } })
+  ]).then(val => {
+    res.json({
+      users: val[0],
+      counts: val[1]
+    });
+  }).catch((err: Error) => res.status(400).json('Error: ' + err));
 });
 
 router.route('/home/').get((req, res) => {
   const offset = Number(req.query.offset);
   const perPage = Number(req.query.perPage);
 
-  User.find({ role: { $in: ['0', '1'] }, status: { $in: ['0', '1'] } }).skip(offset).limit(perPage)
-    .then((users: IUser) => {
-      User.countDocuments({ role: { $in: ['0', '1'] }, status: { $in: ['0', '1'] } })
-        .then((count: number) => res.json({ users, count }));
+  Promise.all([
+    fetchUsers({ role: { $in: ['0', '1'] }, status: { $in: ['0', '1'] } }).skip(offset).limit(perPage),
+    countDoc({ role: { $in: ['0', '1'] }, status: { $in: ['0', '1'] } })
+  ]).then(val => {
+    res.json({
+      users: val[0],
+      counts: val[1]
     })
-    .catch((err: Error) => res.status(400).json('Error: ' + err));
+  }).catch((err: Error) => res.status(400).json('Error: ' + err));
 });
 
 router.route('/:address').get((req, res) => {
-  const _address = req.params.address;
-  User.findOne({ address: _address })
+  fetchUser({ address: req.params.address })
     .then((user: IUser) => res.json(user))
     .catch((err: Error) => res.status(400).json('Error: ' + err));
 });

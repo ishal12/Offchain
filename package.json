@@ -4,13 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
-  },
-  "jest": {
-    "transform": {
-      "^.+\\.[t|j]sx?$": "babel-jest"
-    }
+    "test": "jest",
+    "coverage": "test --coverage",
+    "start": "nodemon src/server.ts"
   },
   "keywords": [],
   "author": "",
@@ -19,12 +15,13 @@
     "@types/bson": "^4.2.0",
     "@types/cors": "^2.8.12",
     "@types/mongoose": "^5.11.97",
+    "@types/nodemon": "^1.19.1",
     "bson": "^4.6.1",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
     "express": "^4.17.2",
     "moment": "^2.29.1",
-    "mongoose": "^5.12.14",
+    "mongoose": "^5.13.14",
     "promise": "^8.1.0",
     "ts-node": "^10.4.0",
     "web3": "^1.5.2"
@@ -43,5 +40,14 @@
     "nodemon": "^2.0.15",
     "supertest": "^6.2.2",
     "typescript": "^4.5.5"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coveragePathIgnorePatterns": [
+      "/node_modules/"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx|js|jsx)$": "babel-jest"
+    }
   }
 }
