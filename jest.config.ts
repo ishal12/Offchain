@@ -21,4 +21,10 @@ export default {
     "node"
   ],
   testEnvironment: "node",
+  coveragePathIgnorePatterns: [
+    "/node_modules/"
+  ],
+  transform: {
+    "^.+\\.(ts|tsx|js|jsx)$": "babel-jest"
+  }
 };

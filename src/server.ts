@@ -18,9 +18,7 @@ connection.once('open', () => {
 
 /** Router */
 
-
 // const reportsRouter = require('./routers/reports');
-
 app.use('/users', routerUser);
 app.use('/livestocks', routerLivestock);
 app.use('/slaughters', routerSlaughter);
