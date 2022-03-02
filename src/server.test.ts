@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-import e from "express";
 import express from "express";
 
 jest.mock("./routers/users", () => {
@@ -23,7 +22,7 @@ jest.mock("./routers/reports", () => {
 });
 
 const mockUse = jest.fn();
-const mockListen = jest.fn().mockImplementationOnce((port, cb) => cb(jest.fn()));
+const mockListen = jest.fn().mockImplementation((port, cb) => cb(jest.fn()));
 const jsonSpy = jest.fn();
 const connectSpy = jest.fn().mockImplementation(() => Promise.resolve());
 const mOpen = jest.fn().mockImplementation((event, cb) => cb(jest.fn()));

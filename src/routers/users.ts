@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { IUser } from "../types";
+import { IUser, IUserDocument } from "../types";
 import { countDoc, fetchUser, fetchUsers } from '../services/user.services';
+import { getUserProcess } from "../controllers/user.controller";
 
 let User = require('../models/user.model');
 const router = Router();
@@ -8,17 +9,9 @@ const router = Router();
 router.route('/process/').get((req, res) => {
   const offset = Number(req.query.offset);
   const perPage = Number(req.query.perPage);
-
-  Promise.all([
-    fetchUsers({ status: { $in: ['2'] } }).skip(offset).limit(perPage),
-    countDoc({ status: { $in: ['2'] } })
-  ]).then(val => {
-    res.json({
-      users: val[0],
-      count: val[1]
-    })
-  }).catch((err: Error) => res.status(400).json('Error: ' + err));
-
+  getUserProcess(offset, perPage).then(val => {
+    val && res.json(val)
+  });
 });
 
 router.route('/activated/').get((req, res) => {
@@ -81,36 +74,36 @@ router.route('/add').post((req, res) => {
 });
 
 // TODO: cari interface user patch
-// router.route('/activate/:address').patch((req, res) => {
-//   User.findOne({ address: req.params.address }).then((user: IUser) => {
-//     user.status = 1;
-//     user.txHash = req.body.txHash;
+router.route('/activate/:address').patch((req, res) => {
+  fetchUser({ address: req.params.address }).then((user: IUserDocument) => {
+    user.status = 1;
+    user.txHash = req.body.txHash;
 
-//     user
-//       .save()
-//       .then(() => res.json('User telah ditambahkan di jaringan blockchain!'))
-//       .catch((err: Error) => res.status(400).json('Error: ' + err))
-//   })
-// });
+    user
+      .save()
+      .then(() => res.json('User telah ditambahkan di jaringan blockchain!'))
+      .catch((err: Error) => res.status(400).json('Error: ' + err))
+  })
+});
 
-// router.route('/toggle/:address').patch((req, res) => {
-//   var status = 'tidak aktif';
-//   User.findOne({ address: req.params.address }).then((user: IUser) => {
-//     console.log('toggle')
-//     if (user.status === 0) {
-//       user.status = 1;
-//       status = 'aktif';
-//     } else if (user.status === 1) {
-//       user.status = 0;
-//       status = 'tidak aktif'
-//     }
-//     user.txHash = req.body.txHash;
+router.route('/toggle/:address').patch((req, res) => {
+  var status = 'tidak aktif';
+  fetchUser({ address: req.params.address }).then((user: IUserDocument) => {
+    console.log('toggle')
+    if (user.status === 0) {
+      user.status = 1;
+      status = 'aktif';
+    } else if (user.status === 1) {
+      user.status = 0;
+      status = 'tidak aktif'
+    }
+    user.txHash = req.body.txHash;
 
-//     user
-//       .save()
-//       .then(() => res.json(`address: ${req.params.address} \nBerhasil diubah menjadi ${status}.`))
-//       .catch((err: Error) => res.status(400).json('Error: ' + err))
-//   })
-// });
+    user
+      .save()
+      .then(() => res.json(`address: ${req.params.address} \nBerhasil diubah menjadi ${status}.`))
+      .catch((err: Error) => res.status(400).json('Error: ' + err))
+  })
+});
 
 export const routerUser = router;
