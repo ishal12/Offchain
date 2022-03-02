@@ -1,9 +1,8 @@
 import { Router } from "express";
-import { parse } from "path/posix";
 
 const router = Router();
 var Web3 = require('web3');
-const SlaughterManager = require('../../../bc-trace/client/src/contracts/SlaughterManager.json');
+const SlaughterManager = require('../../SlaughterManager.json');
 
 const web3 = new Web3(Web3.givenProvider || 'http://127.0.0.1:8545');
 const deployedNetwork = SlaughterManager.networks[5777];

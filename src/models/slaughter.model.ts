@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { ISlaughterType } from '../types';
+import { ISlaughterDocument } from '../types';
 
 const slaughterSchema = new Schema(
     {
@@ -39,6 +39,6 @@ const slaughterSchema = new Schema(
     }
 );
 
-const Slaughter = model<ISlaughterType>('Slaughter', slaughterSchema);
+const Slaughter = model<ISlaughterDocument>('Slaughter', slaughterSchema);
 
 module.exports = Slaughter;

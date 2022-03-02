@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { ILivestockType } from '../types';
+import { ILivestockDocument } from '../types';
 
 const livestockSchema = new Schema(
     {
@@ -51,6 +51,6 @@ const livestockSchema = new Schema(
     }
 );
 
-const Livestock = model<ILivestockType>('Livestock', livestockSchema);
+const Livestock = model<ILivestockDocument>('Livestock', livestockSchema);
 
 module.exports = Livestock;
